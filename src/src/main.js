@@ -41,5 +41,6 @@ export default async ({ req, res, log, error }) => {
   }
   const info = await getSEOInfo(req.query.url);
   if (!info) return error("failed to get SEO information");
+  log(info);
   return res.json(info);
 };
