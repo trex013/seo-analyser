@@ -8,7 +8,9 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "node-appwrite": "^9.0.0"
+    "node-appwrite": "^9.0.0",
+    "axios": "^1.5.1",
+    "cheerio": "^1.0.0-rc.12"
   },
   "devDependencies": {
     "prettier": "^3.0.0"
