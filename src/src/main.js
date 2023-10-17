@@ -1,33 +1,45 @@
-import { Client } from 'node-appwrite';
+import axios from "axios";
+import cheerio from "cheerio";
 
-// This is your Appwrite function
-// It's executed each time we get a request
-export default async ({ req, res, log, error }) => {
-  // Why not try the Appwrite SDK?
-  //
-  // const client = new Client()
-  //    .setEndpoint('https://cloud.appwrite.io/v1')
-  //    .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-  //    .setKey(process.env.APPWRITE_API_KEY);
+async function getSEOInfo(url) {
+  try {
+    const response = await axios.get(url);
+    const html = response.data;
+    const $ = cheerio.load(html);
+    const title = $("title").text();
+    const headers = {};
+    for (let i = 1; i <= 6; i++) {
+      headers[`h${i}`] = $(`h${i}`).length;
+    }
 
-  // You can log messages to the console
-  log('Hello, Logs!');
+    const metaDescription = $("meta[name=description]").attr("content") || "";
+    const metaKeywords = $("meta[name=keywords]").attr("content") || "";
+    const images = $("img").length;
+    const canonicalURL = $("link[rel=canonical]").attr("href") || "";
+    const internalLinks = $('a[href^="/"]').length;
+    const externalLinks = $('a[href^="http"]').length;
 
-  // If something goes wrong, log an error
-  error('Hello, Errors!');
-
-  // The `req` object contains the request data
-  if (req.method === 'GET') {
-    // Send a response with the res object helpers
-    // `res.send()` dispatches a string back to the client
-    return res.send('Hello, World!');
+    return {
+      title,
+      headers,
+      metaDescription,
+      metaKeywords,
+      images,
+      canonicalURL,
+      internalLinks,
+      externalLinks,
+    };
+  } catch (error) {
+    console.error("Error: ", error);
+    return null;
   }
+}
 
-  // `res.json()` is a handy helper for sending JSON
-  return res.json({
-    motto: 'Build Fast. Scale Big. All in One Place.',
-    learn: 'https://appwrite.io/docs',
-    connect: 'https://appwrite.io/discord',
-    getInspired: 'https://builtwith.appwrite.io',
-  });
+export default async ({ req, res, log, error }) => {
+  if (req.method !== "GET") {
+    return error("Request method not supported");
+  }
+  const info = await getSEOInfo(req.query.url);
+  if (!info) return error("failed to get SEO information");
+  return res.json(info);
 };
